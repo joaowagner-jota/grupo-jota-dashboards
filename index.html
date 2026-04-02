@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Grupo JOTA — Dashboard Polpas</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+:root {
+  --bg: #f7f6f3;
+  --bg-card: #ffffff;
+  --bg-surface: #efeee9;
+  --text-primary: #1a1a18;
+  --text-secondary: #6b6a65;
+  --text-tertiary: #9c9b95;
+  --border: rgba(0,0,0,0.08);
+  --border-strong: rgba(0,0,0,0.15);
+  --pm: #2563eb;
+  --pm-light: #dbeafe;
+  --pm-text: #1e40af;
+  --bss: #dc5a20;
+  --bss-light: #fff1eb;
+  --bss-text: #9a3412;
+  --green: #059669;
+  --green-bg: #ecfdf5;
+  --green-text: #065f46;
+  --amber: #d97706;
+  --amber-bg: #fffbeb;
+  --amber-text: #92400e;
+  --radius: 10px;
+  --radius-lg: 14px;
+  --shadow-sm: 0 1px 2px rgba(0,0,0,0.04);
+}
+
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'DM Sans',-apple-system,sans-serif;background:var(--bg);color:var(--text-primary);line-height:1.5;-webkit-font-smoothing:antialiased}
+
+.container{max-width:1080px;margin:0 auto;padding:24px 20px 48px}
+header{display:flex;align-items:center;justify-content:space-between;margin-bottom:28px;flex-wrap:wrap;gap:12px}
+header h1{font-size:20px;font-weight:700;letter-spacing:-0.5px}
+header h1 span{color:var(--text-tertiary);font-weight:400}
+.badge-update{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-tertiary);background:var(--bg-surface);padding:4px 10px;border-radius:6px}
+
+.tabs{display:flex;gap:4px;margin-bottom:24px;background:var(--bg-surface);padding:4px;border-radius:var(--radius);overflow-x:auto}
+.tab-btn{padding:8px 16px;border:none;background:transparent;border-radius:8px;font-family:inherit;font-size:13px;font-weight:500;color:var(--text-secondary);cursor:pointer;white-space:nowrap;transition:all .2s}
+.tab-btn:hover{color:var(--text-primary)}
+.tab-btn.active{background:var(--bg-card);color:var(--text-primary);box-shadow:var(--shadow-sm)}
+
+.panel{display:none}.panel.active{display:block}
+
+.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:12px;margin-bottom:24px}
+.mc{background:var(--bg-card);border-radius:var(--radius);padding:16px 18px;border:.5px solid var(--border)}
+.mc-label{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--text-tertiary);margin-bottom:4px}
+.mc-val{font-size:22px;font-weight:700;letter-spacing:-.5px}
+.mc-sub{font-size:11px;color:var(--text-tertiary);margin-top:2px}
+
+.card{background:var(--bg-card);border-radius:var(--radius-lg);border:.5px solid var(--border);padding:20px 22px;margin-bottom:16px}
+.card-title{font-size:14px;font-weight:600;margin-bottom:16px}
+
+.suppliers{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+.sup-card{background:var(--bg-card);border-radius:var(--radius-lg);border:.5px solid var(--border);padding:18px 20px}
+.sup-dot{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:8px;vertical-align:middle}
+.sup-name{font-size:15px;font-weight:600;margin-bottom:12px}
+.sup-detail{font-size:13px;color:var(--text-secondary);line-height:2}
+
+.alert-box{border-radius:var(--radius);padding:14px 18px;margin-bottom:16px}
+.alert-box.warn{background:var(--amber-bg)}
+.alert-box.warn .at{color:var(--amber-text);font-size:13px;font-weight:600}
+.alert-box.warn .ab{color:var(--amber-text);font-size:12px;line-height:1.9;margin-top:6px}
+
+.chart-wrap{position:relative;width:100%;margin-bottom:16px}
+.legend{display:flex;flex-wrap:wrap;gap:16px;font-size:12px;color:var(--text-secondary);margin-bottom:12px}
+.li{display:flex;align-items:center;gap:5px}
+.ld{width:10px;height:10px;border-radius:3px;flex-shrink:0}
+
+.cost-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1px;background:var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:16px}
+.cost-col{background:var(--bg-card);padding:14px 16px}
+.cost-col-h{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--text-tertiary);margin-bottom:10px;font-weight:500}
+.cr{display:flex;justify-content:space-between;align-items:center;padding:6px 0;font-size:13px}
+.cr .l{color:var(--text-secondary)}.cr .v{font-weight:600;font-family:'JetBrains Mono',monospace;font-size:13px}
+.hg{color:var(--green)}
+
+.sg{display:flex;align-items:center;gap:14px;margin-bottom:12px}
+.sg label{font-size:13px;color:var(--text-secondary);min-width:100px}
+.sg input[type=range]{flex:1;height:6px;-webkit-appearance:none;background:var(--bg-surface);border-radius:3px;outline:none}
+.sg input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--pm);cursor:pointer;border:3px solid var(--bg-card);box-shadow:0 1px 4px rgba(0,0,0,.15)}
+.sg .sv{font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:500;min-width:75px;text-align:right}
+
+.dt{width:100%;border-collapse:collapse;font-size:13px}
+.dt th{text-align:left;padding:10px 8px;font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--text-tertiary);font-weight:500;border-bottom:1px solid var(--border-strong)}
+.dt td{padding:10px 8px;border-bottom:.5px solid var(--border)}
+.sb{display:inline-block;padding:2px 10px;border-radius:6px;font-size:11px;font-weight:500}
+.sb-ok{background:var(--green-bg);color:var(--green-text)}
+.sb-warn{background:var(--amber-bg);color:var(--amber-text)}
+
+.sc-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px}
+.sc-card{background:var(--bg-card);border-radius:var(--radius-lg);padding:18px 20px}
+.sc-card.feat{border:2px solid var(--pm)}.sc-card:not(.feat){border:.5px solid var(--border)}
+.sc-badge{display:inline-block;font-size:11px;font-weight:500;padding:3px 10px;border-radius:6px;margin-bottom:10px}
+.sc-badge.a{background:var(--pm-light);color:var(--pm-text)}.sc-badge.b{background:var(--bg-surface);color:var(--text-secondary)}
+.sc-title{font-size:15px;font-weight:600;margin-bottom:10px}
+.sc-detail{font-size:13px;color:var(--text-secondary);line-height:2}
+
+.footer{text-align:center;font-size:11px;color:var(--text-tertiary);margin-top:32px;padding-top:16px;border-top:.5px solid var(--border)}
+
+@media(max-width:640px){
+  .suppliers,.sc-grid,.cost-grid{grid-template-columns:1fr}
+  .metrics{grid-template-columns:repeat(2,1fr)}
+  .tab-btn{padding:7px 12px;font-size:12px}
+}
+</style>
+</head>
+<body>
+<div class="container">
+
+<header>
+  <h1>Dashboard polpas <span>— Grupo JOTA</span></h1>
+  <div class="badge-update">Atualizado: 02/abr/2026</div>
+</header>
+
+<div class="tabs">
+  <button class="tab-btn active" onclick="showTab('overview',this)">Visão geral</button>
+  <button class="tab-btn" onclick="showTab('historico',this)">Histórico</button>
+  <button class="tab-btn" onclick="showTab('custo',this)">Custo efetivo</button>
+  <button class="tab-btn" onclick="showTab('blend',this)">Simulador blend</button>
+  <button class="tab-btn" onclick="showTab('cargas',this)">Cargas 2026</button>
+  <button class="tab-btn" onclick="showTab('fluxo',this)">Fluxo de caixa</button>
+</div>
+
+<!-- VISÃO GERAL -->
+<div class="panel active" id="panel-overview">
+  <div class="metrics">
+    <div class="mc"><div class="mc-label">Programado 2026</div><div class="mc-val">~65.125 kg</div><div class="mc-sub">com 3ª BSS incerta</div></div>
+    <div class="mc"><div class="mc-label">Confirmado 2026</div><div class="mc-val">54.115 kg</div><div class="mc-sub">3 PM + 2 BSS</div></div>
+    <div class="mc"><div class="mc-label">Blend-alvo</div><div class="mc-val">65 / 35</div><div class="mc-sub">PM / BSS</div></div>
+    <div class="mc"><div class="mc-label">Economia blend (aj.)</div><div class="mc-val hg">R$ 14.310</div><div class="mc-sub">vs 50/50 em 60t/ano (aj. sólidos)</div></div>
+  </div>
+  <div class="suppliers">
+    <div class="sup-card">
+      <div class="sup-name"><span class="sup-dot" style="background:var(--pm)"></span>PM — Rogério</div>
+      <div class="sup-detail">
+        R$ 14,00/kg bruto (combinado 12,0% sól.)<br>
+        R$ 11,13/kg efetivo (ICMS 20,5%)<br>
+        <strong style="color:var(--text-primary)">R$ 11,61/kg ajustado sólidos</strong><br>
+        <span style="color:var(--amber)">Entregue: 11,5% (−0,5pp)</span> · Lucro Presumido
+      </div>
+    </div>
+    <div class="sup-card">
+      <div class="sup-name"><span class="sup-dot" style="background:var(--bss)"></span>BSS — Renato</div>
+      <div class="sup-detail">
+        R$ 15,00/kg bruto (combinado 12,5% sól.)<br>
+        R$ 13,20/kg efetivo (ICMS 12,0%)<br>
+        <strong style="color:var(--text-primary)">R$ 13,20/kg ajustado sólidos</strong><br>
+        Entregue: 12,5% (conforme) · Simples Nacional
+      </div>
+    </div>
+  </div>
+  <div class="alert-box warn">
+    <div class="at">Alertas ativos</div>
+    <div class="ab">
+      FIN — Confirmar aproveitamento ICMS 4,0361% NF da BSS<br>
+      IND — Avaliar capacidade câmara fria para carreta 28t<br>
+      PPQ — Teste sensorial blend 65/35 pendente<br>
+      COM — Retorno BSS (Juliana) jun/26: se 3ª carga não confirmar, PM 4/4 substitui<br>
+      62% probabilidade El Niño 2S/2026 — risco safra
+    </div>
+  </div>
+</div>
+
+<!-- HISTÓRICO -->
+<div class="panel" id="panel-historico">
+  <div class="card">
+    <div class="card-title">Volume de açaí por fornecedor (kg)</div>
+    <div class="legend">
+      <span class="li"><span class="ld" style="background:var(--pm)"></span>PM</span>
+      <span class="li"><span class="ld" style="background:var(--bss)"></span>BSS</span>
+    </div>
+    <div class="chart-wrap" style="height:320px"><canvas id="chartHist"></canvas></div>
+  </div>
+  <div class="metrics">
+    <div class="mc"><div class="mc-label">2023</div><div class="mc-val">58.210 kg</div><div class="mc-sub">PM 43% · BSS 57%</div></div>
+    <div class="mc"><div class="mc-label">2024</div><div class="mc-val">71.485 kg</div><div class="mc-sub">PM 8% · BSS 92%</div></div>
+    <div class="mc"><div class="mc-label">2025</div><div class="mc-val">~51.295 kg</div><div class="mc-sub">PM 37% · BSS 63%</div></div>
+    <div class="mc"><div class="mc-label">2026 (prog.)</div><div class="mc-val">~65.125 kg</div><div class="mc-sub">incl. 3ª BSS incerta</div></div>
+  </div>
+  <div class="card">
+    <div class="card-title">Evolução preço bruto/kg</div>
+    <div class="legend">
+      <span class="li"><span class="ld" style="background:var(--pm)"></span>PM</span>
+      <span class="li"><span class="ld" style="background:var(--bss)"></span>BSS</span>
+      <span class="li"><span class="ld" style="background:#9c9b95"></span>Mercado (ref)</span>
+    </div>
+    <div class="chart-wrap" style="height:260px"><canvas id="chartPreco"></canvas></div>
+  </div>
+</div>
+
+<!-- CUSTO EFETIVO -->
+<div class="panel" id="panel-custo">
+  <div class="card">
+    <div class="card-title">Quatro camadas de custo — 2026</div>
+
+    <div class="cost-grid" style="grid-template-columns:1fr 1fr 1fr 1fr">
+      <div class="cost-col">
+        <div class="cost-col-h">1. Bruto + frete</div>
+        <div class="cr"><span class="l">PM</span><span class="v">R$ 14,32</span></div>
+        <div class="cr"><span class="l">BSS</span><span class="v">R$ 15,41</span></div>
+        <div class="cr"><span class="l">Δ</span><span class="v hg">R$ 1,09</span></div>
+      </div>
+      <div class="cost-col">
+        <div class="cost-col-h">2. Efetivo (ICMS)</div>
+        <div class="cr"><span class="l">PM</span><span class="v">R$ 11,13</span></div>
+        <div class="cr"><span class="l">BSS</span><span class="v">R$ 13,20</span></div>
+        <div class="cr"><span class="l">Δ</span><span class="v hg">R$ 2,07</span></div>
+      </div>
+      <div class="cost-col" style="background:var(--amber-bg)">
+        <div class="cost-col-h">3. Ajustado sólidos</div>
+        <div class="cr"><span class="l">PM</span><span class="v" style="color:var(--amber)">R$ 11,61</span></div>
+        <div class="cr"><span class="l">BSS</span><span class="v">R$ 13,20</span></div>
+        <div class="cr"><span class="l">Δ</span><span class="v hg">R$ 1,59</span></div>
+      </div>
+      <div class="cost-col">
+        <div class="cost-col-h">4. Por kg de sólidos</div>
+        <div class="cr"><span class="l">PM</span><span class="v">R$ 100,96</span></div>
+        <div class="cr"><span class="l">BSS</span><span class="v">R$ 105,60</span></div>
+        <div class="cr"><span class="l">Δ</span><span class="v hg">R$ 4,64</span></div>
+      </div>
+    </div>
+
+    <div style="font-size:12px;color:var(--text-secondary);line-height:1.8;padding:0 4px">
+      <strong>Camada 1</strong> = preço tabela + frete médio/kg<br>
+      <strong>Camada 2</strong> = preço − crédito ICMS (PM 20,5% LP · BSS 12,0% SN)<br>
+      <strong style="color:var(--amber-text)">Camada 3</strong> = efetivo × (sólido combinado ÷ sólido entregue). PM combinou 12,0%, entregou 11,5% → penalidade +4,3%<br>
+      <strong>Camada 4</strong> = custo ajustado ÷ % sólidos entregues<br>
+      <em>PM continua mais barato, mas vantagem real é R$ 1,59/kg (não R$ 2,07). Penalidade de sólidos custa ~R$ 0,48/kg.</em>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">Evolução custo efetivo e por kg de sólidos</div>
+    <div class="legend">
+      <span class="li"><span class="ld" style="background:var(--pm)"></span>PM efetivo ICMS</span>
+      <span class="li"><span class="ld" style="background:var(--pm);border:1px dashed var(--pm)"></span>PM ajustado sólidos</span>
+      <span class="li"><span class="ld" style="background:var(--bss)"></span>BSS efetivo</span>
+      <span class="li"><span class="ld" style="background:#93c5fd"></span>PM /kg sólidos</span>
+      <span class="li"><span class="ld" style="background:#fdba74"></span>BSS /kg sólidos</span>
+    </div>
+    <div class="chart-wrap" style="height:300px"><canvas id="chartCusto"></canvas></div>
+  </div>
+</div>
+
+<!-- SIMULADOR BLEND -->
+<div class="panel" id="panel-blend">
+  <div class="card">
+    <div class="card-title">Simulador de blend — custo equalizado por sólidos</div>
+    <div class="sg">
+      <label>PM %</label>
+      <input type="range" min="30" max="80" value="65" step="5" id="sliderPM" oninput="updateBlend()">
+      <span class="sv" id="valPM">65%</span>
+    </div>
+    <div class="sg">
+      <label>BSS %</label>
+      <input type="range" min="20" max="70" value="35" step="5" id="sliderBSS" disabled style="opacity:.5">
+      <span class="sv" id="valBSS">35%</span>
+    </div>
+    <div class="sg">
+      <label>Volume/ano (kg)</label>
+      <input type="range" min="40000" max="80000" value="60000" step="5000" id="sliderVol" oninput="updateBlend()">
+      <span class="sv" id="valVol">60.000</span>
+    </div>
+    <div class="metrics" style="margin-top:20px">
+      <div class="mc"><div class="mc-label">Custo blend/kg (efetivo)</div><div class="mc-val" id="bCE">R$ 11,86</div></div>
+      <div class="mc"><div class="mc-label">Custo blend/kg sólidos</div><div class="mc-val" id="bCS">R$ 99,86</div></div>
+      <div class="mc"><div class="mc-label">Sólidos médios</div><div class="mc-val" id="bSol">11,85%</div></div>
+      <div class="mc"><div class="mc-label">Economia vs 50/50 (efetivo)</div><div class="mc-val hg" id="bEco">R$ 18.630</div></div>
+      <div class="mc"><div class="mc-label">Custo total anual</div><div class="mc-val" id="bTot">R$ 711.360</div></div>
+      <div class="mc"><div class="mc-label">Economia/kg sólidos vs 50/50</div><div class="mc-val hg" id="bEcoS">R$ 2,30</div></div>
+    </div>
+    <div class="chart-wrap" style="height:260px;margin-top:16px"><canvas id="chartBlend"></canvas></div>
+    <div class="legend" style="justify-content:center">
+      <span class="li"><span class="ld" style="background:var(--pm)"></span>PM</span>
+      <span class="li"><span class="ld" style="background:var(--bss)"></span>BSS</span>
+    </div>
+    <div style="font-size:12px;color:var(--text-secondary);margin-top:12px;line-height:1.7">
+      Açaí ZERO permanece 100% BSS — fora do blend. Custos PM ajustados pela penalidade de sólidos: combinado 12,0%, entregue 11,5% (+4,3% no custo efetivo). BSS entregou o combinado (12,5%).
+    </div>
+  </div>
+</div>
+
+<!-- CARGAS 2026 -->
+<div class="panel" id="panel-cargas">
+  <div class="card">
+    <div class="card-title">Programação de cargas 2026</div>
+    <div style="overflow-x:auto">
+      <table class="dt">
+        <thead><tr><th>#</th><th>Fornecedor</th><th>Volume</th><th>Previsão</th><th>R$/kg</th><th>Ef./kg</th><th>Aj. sól./kg</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td><span class="sup-dot" style="background:var(--bss);width:8px;height:8px"></span>BSS 1/3</td><td>11.010 kg</td><td>09/abr</td><td>R$ 15,00</td><td>R$ 13,20</td><td>R$ 13,20</td><td><span class="sb sb-ok">Programada</span></td></tr>
+          <tr><td>2</td><td><span class="sup-dot" style="background:var(--pm);width:8px;height:8px"></span>PM 1/3</td><td>6.020 aç + 4.025 cup</td><td>09/abr</td><td>R$ 14,00 / 8,50</td><td>R$ 11,13</td><td style="color:var(--amber)">R$ 11,61</td><td><span class="sb sb-ok">Programada</span></td></tr>
+          <tr><td>3</td><td><span class="sup-dot" style="background:var(--pm);width:8px;height:8px"></span>PM 2/3</td><td>~11.025 kg</td><td>15/jun</td><td>R$ 14,00</td><td>R$ 11,13</td><td style="color:var(--amber)">R$ 11,61</td><td><span class="sb sb-ok" style="background:#dbeafe;color:#1e40af">Nova</span></td></tr>
+          <tr><td>4</td><td><span class="sup-dot" style="background:var(--bss);width:8px;height:8px"></span>BSS 2/3</td><td>11.010 kg</td><td>15/jul</td><td>R$ 15,00</td><td>R$ 13,20</td><td>R$ 13,20</td><td><span class="sb sb-ok">Programada</span></td></tr>
+          <tr><td>5</td><td><span class="sup-dot" style="background:var(--pm);width:8px;height:8px"></span>PM 3/3</td><td>11.025 kg</td><td>03/ago</td><td>R$ 14,00</td><td>R$ 11,13</td><td style="color:var(--amber)">R$ 11,61</td><td><span class="sb sb-ok">Programada</span></td></tr>
+          <tr style="opacity:.7"><td>6</td><td><span class="sup-dot" style="background:var(--bss);width:8px;height:8px"></span>BSS 3/3?</td><td>~11.010 kg</td><td>01/set?</td><td>R$ 15,00</td><td>R$ 13,20</td><td>R$ 13,20</td><td><span class="sb sb-warn">Incerta</span></td></tr>
+          <tr style="opacity:.7;background:var(--pm-light)"><td>6b</td><td><span class="sup-dot" style="background:var(--pm);width:8px;height:8px"></span>PM 4/4?</td><td>~11.025 kg</td><td>Set–Out?</td><td>R$ 14,00</td><td>R$ 11,13</td><td style="color:var(--amber)">R$ 11,61</td><td><span class="sb" style="background:var(--pm-light);color:var(--pm-text)">Substituta (se BSS falhar)</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="metrics">
+    <div class="mc"><div class="mc-label">PM confirmado</div><div class="mc-val">28.070 kg aç</div><div class="mc-sub">+ 4.025 kg cupuaçu (3 cargas)</div></div>
+    <div class="mc"><div class="mc-label">BSS confirmado</div><div class="mc-val">22.020 kg aç</div><div class="mc-sub">+ ~11.010 incerto (2+1 cargas)</div></div>
+    <div class="mc"><div class="mc-label">Total confirmado</div><div class="mc-val">54.115 kg</div></div>
+    <div class="mc"><div class="mc-label">Mix real confirm.</div><div class="mc-val hg">56% / 44%</div><div class="mc-sub">PM/BSS (meta: 65/35)</div></div>
+  </div>
+  <div class="card">
+    <div class="card-title">Timeline mensal 2026</div>
+    <div class="legend">
+      <span class="li"><span class="ld" style="background:var(--pm)"></span>PM</span>
+      <span class="li"><span class="ld" style="background:var(--bss)"></span>BSS confirmada</span>
+      <span class="li"><span class="ld" style="background:#fdba74"></span>BSS incerta</span>
+    </div>
+    <div class="chart-wrap" style="height:240px"><canvas id="chartTimeline"></canvas></div>
+  </div>
+  <div class="alert-box warn">
+    <div class="at">Decisão pendente — confirmação jun/26</div>
+    <div class="ab">
+      <strong>Se BSS 3/3 confirmar (set):</strong> 3 PM + 3 BSS = 65.125 kg · mix 43/57 PM/BSS<br>
+      <strong>Se BSS 3/3 NÃO confirmar → PM 4/4 substitui:</strong> 4 PM + 2 BSS = ~65.140 kg · mix 66/34 PM/BSS (atinge meta 65/35)<br>
+      Gatilho: retorno à BSS (Juliana) final de junho. Economia ajustada da substituição: ~R$ 17.506 (Δ R$ 1,59/kg × 11.010 kg).
+    </div>
+  </div>
+</div>
+
+<!-- FLUXO DE CAIXA -->
+<div class="panel" id="panel-fluxo">
+  <div class="sc-grid">
+    <div class="sc-card feat">
+      <div class="sc-badge a">Cenário A</div>
+      <div class="sc-title">Carreta 28t (mista)</div>
+      <div class="sc-detail">Volume: 28.000 kg<br>Bruto: ~R$ 392.000<br>Efetivo: ~R$ 311.640<br>Parcelas: ~R$ 10.000/sem<br>Prazo: ~39 semanas<br>Frete: 1 viagem</div>
+    </div>
+    <div class="sc-card">
+      <div class="sc-badge b">Cenário B — atual</div>
+      <div class="sc-title">3 cargas padrão PM (~32t)</div>
+      <div class="sc-detail">Volume: 32.095 kg<br>Bruto: ~R$ 449.000<br>Efetivo: ~R$ 357.000<br>Parcelas: ~R$ 10.000/sem<br>Prazo: ~45 semanas<br>Frete: 3 viagens</div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">Desembolso acumulado semanal</div>
+    <div class="legend">
+      <span class="li"><span class="ld" style="background:var(--pm)"></span>Cenário A — 28t carreta</span>
+      <span class="li"><span class="ld" style="background:var(--bss)"></span>Cenário B — 3×11t padrão</span>
+    </div>
+    <div class="chart-wrap" style="height:280px"><canvas id="chartFluxo"></canvas></div>
+  </div>
+  <div style="font-size:12px;color:var(--text-secondary);line-height:1.7;padding:4px">
+    Cenário A concentra volume numa carreta, reduz frete (1 viagem) mas exige câmara fria para 28t. Cenário B (atual) distribui em 3 cargas padrão — mais flexível, mas frete 3× maior. Ação FIN: simular aderência ao fluxo de caixa.
+  </div>
+</div>
+
+</div>
+
+<div class="footer">Grupo JOTA — Painel de fornecimento de polpas · Gerado via Claude IA · Dados: 02/abr/2026</div>
+
+<script>
+const PM_EF_RAW=11.13, BSS_EF=13.20;
+const PM_SOL_COMB=0.120, PM_SOL_ENT=0.115, BSS_SOL=0.125;
+const PM_EF=PM_EF_RAW*(PM_SOL_COMB/PM_SOL_ENT);
+const PM_SOL=PM_SOL_ENT;
+const BASE5050_EF=(PM_EF+BSS_EF)/2;
+const BASE5050_SOL=(PM_SOL+BSS_SOL)/2;
+const BASE5050_CUSTO_SOL=BASE5050_EF/BASE5050_SOL;
+const gc='rgba(0,0,0,0.05)',tc='#9c9b95';
+const sx={grid:{display:false},ticks:{color:tc,font:{size:12}}};
+const sy={grid:{color:gc},ticks:{color:tc,font:{size:11}}};
+let C={};
+
+function showTab(id,btn){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('panel-'+id).classList.add('active');
+  btn.classList.add('active');
+  if(id==='historico'&&!C.hist)initHist();
+  if(id==='custo'&&!C.custo)initCusto();
+  if(id==='blend'&&!C.blend)initBlend();
+  if(id==='cargas'&&!C.tl)initTL();
+  if(id==='fluxo'&&!C.fluxo)initFluxo();
+}
+
+function initHist(){
+  C.hist=new Chart(document.getElementById('chartHist'),{type:'bar',data:{labels:['2023','2024','2025','2026 (prog.)'],datasets:[{label:'PM',data:[25200,5425,19075,28070],backgroundColor:'#2563eb',borderRadius:6,barPercentage:.7},{label:'BSS',data:[33010,66060,32220,33030],backgroundColor:'#dc5a20',borderRadius:6,barPercentage:.7}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:sx,y:{...sy,ticks:{...sy.ticks,callback:v=>(v/1000).toFixed(0)+'t'}}}}});
+  C.preco=new Chart(document.getElementById('chartPreco'),{type:'line',data:{labels:['2023','2024','2025','2026'],datasets:[{label:'PM',data:[9,11.5,14,14],borderColor:'#2563eb',backgroundColor:'#2563eb',borderWidth:2.5,pointRadius:5,pointBackgroundColor:'#fff',pointBorderWidth:2.5,tension:.3},{label:'BSS',data:[11.8,12.6,15,15],borderColor:'#dc5a20',backgroundColor:'#dc5a20',borderWidth:2.5,pointRadius:5,pointBackgroundColor:'#fff',pointBorderWidth:2.5,tension:.3},{label:'Mercado',data:[9.5,11,13.75,17.5],borderColor:'#9c9b95',backgroundColor:'#9c9b95',borderWidth:1.5,pointRadius:3,borderDash:[5,4],tension:.3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:sx,y:{...sy,ticks:{...sy.ticks,callback:v=>'R$ '+v.toFixed(2)},min:7}}}});
+}
+
+function initCusto(){
+  const pe=[7.16,9.14,11.13,11.13],be=[10.38,11.09,13.20,13.20];
+  const peAdj=pe.map(v=>Math.round(v*(PM_SOL_COMB/PM_SOL_ENT)*100)/100);
+  const ps=peAdj.map(v=>Math.round(v/PM_SOL*100)/100),bs=be.map(v=>Math.round(v/BSS_SOL*100)/100);
+  C.custo=new Chart(document.getElementById('chartCusto'),{type:'line',data:{labels:['2023','2024','2025','2026'],datasets:[{label:'PM ef. ICMS',data:pe,borderColor:'#2563eb',backgroundColor:'#2563eb',borderWidth:2,pointRadius:3,pointBackgroundColor:'#fff',pointBorderWidth:2,tension:.3,yAxisID:'y'},{label:'PM aj. sólidos',data:peAdj,borderColor:'#2563eb',backgroundColor:'#2563eb',borderWidth:2.5,pointRadius:5,pointBackgroundColor:'#fff',pointBorderWidth:2.5,borderDash:[8,4],tension:.3,yAxisID:'y'},{label:'BSS ef.',data:be,borderColor:'#dc5a20',backgroundColor:'#dc5a20',borderWidth:2.5,pointRadius:5,pointBackgroundColor:'#fff',pointBorderWidth:2.5,tension:.3,yAxisID:'y'},{label:'PM /kg sol',data:ps,borderColor:'#93c5fd',backgroundColor:'#93c5fd',borderWidth:2,pointRadius:3,borderDash:[5,3],tension:.3,yAxisID:'y1'},{label:'BSS /kg sol',data:bs,borderColor:'#fdba74',backgroundColor:'#fdba74',borderWidth:2,pointRadius:3,borderDash:[5,3],tension:.3,yAxisID:'y1'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:sx,y:{...sy,position:'left',ticks:{...sy.ticks,callback:v=>'R$ '+v.toFixed(2)},title:{display:true,text:'Custo efetivo/kg',color:tc,font:{size:11}},min:5},y1:{...sy,position:'right',grid:{display:false},ticks:{...sy.ticks,callback:v=>'R$ '+v.toFixed(0)},title:{display:true,text:'Custo/kg sólidos',color:tc,font:{size:11}},min:50}}}});
+}
+
+function updateBlend(){
+  const pm=parseInt(document.getElementById('sliderPM').value);
+  const bss=100-pm,vol=parseInt(document.getElementById('sliderVol').value);
+  document.getElementById('sliderBSS').value=bss;
+  document.getElementById('valPM').textContent=pm+'%';
+  document.getElementById('valBSS').textContent=bss+'%';
+  document.getElementById('valVol').textContent=vol.toLocaleString('pt-BR');
+  const pf=pm/100,bf=bss/100;
+  const ce=pf*PM_EF+bf*BSS_EF;
+  const sm=pf*PM_SOL+bf*BSS_SOL;
+  const cs=ce/sm;
+  const eco=(BASE5050_EF-ce)*vol;
+  const ecoS=BASE5050_CUSTO_SOL-cs;
+  const tot=ce*vol;
+  document.getElementById('bCE').textContent='R$ '+ce.toFixed(2);
+  document.getElementById('bCS').textContent='R$ '+cs.toFixed(2);
+  document.getElementById('bSol').textContent=(sm*100).toFixed(2)+'%';
+  document.getElementById('bEco').textContent='R$ '+Math.round(eco).toLocaleString('pt-BR');
+  document.getElementById('bTot').textContent='R$ '+Math.round(tot).toLocaleString('pt-BR');
+  document.getElementById('bEcoS').textContent='R$ '+ecoS.toFixed(2)+'/kg sol';
+  if(C.blend){C.blend.data.datasets[0].data=[pm,bss];C.blend.update()}
+}
+
+function initBlend(){
+  C.blend=new Chart(document.getElementById('chartBlend'),{type:'doughnut',data:{labels:['PM','BSS'],datasets:[{data:[65,35],backgroundColor:['#2563eb','#dc5a20'],borderWidth:0,borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,cutout:'65%',plugins:{legend:{display:false}}}});
+  updateBlend();
+}
+
+function initTL(){
+  C.tl=new Chart(document.getElementById('chartTimeline'),{type:'bar',data:{labels:['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'],datasets:[{label:'PM',data:[0,0,0,6020,0,11025,0,11025,0,0,0,0],backgroundColor:'#2563eb',borderRadius:4,barPercentage:.6},{label:'BSS conf.',data:[0,0,0,11010,0,0,11010,0,0,0,0,0],backgroundColor:'#dc5a20',borderRadius:4,barPercentage:.6},{label:'BSS inc.',data:[0,0,0,0,0,0,0,0,11010,0,0,0],backgroundColor:'#fdba74',borderRadius:4,barPercentage:.6}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.dataset.label+': '+c.raw.toLocaleString('pt-BR')+' kg'}}},scales:{x:{...sx,stacked:true},y:{...sy,stacked:true,ticks:{...sy.ticks,callback:v=>(v/1000).toFixed(0)+'t'}}}}});
+}
+
+function initFluxo(){
+  const wA=39,wB=45,lb=[],dA=[],dB=[];
+  for(let i=0;i<=48;i++){lb.push(i%5===0?'S'+i:'');dA.push(Math.min(i*10000,wA*10000));dB.push(Math.min(i*10000,wB*10000))}
+  C.fluxo=new Chart(document.getElementById('chartFluxo'),{type:'line',data:{labels:lb,datasets:[{label:'28t carreta',data:dA,borderColor:'#2563eb',backgroundColor:'rgba(37,99,235,.06)',fill:true,borderWidth:2.5,pointRadius:0,tension:.1},{label:'3×11t padrão',data:dB,borderColor:'#dc5a20',backgroundColor:'rgba(220,90,32,.06)',fill:true,borderWidth:2.5,pointRadius:0,tension:.1}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.dataset.label+': R$ '+c.raw.toLocaleString('pt-BR')}}},scales:{x:{...sx,ticks:{...sx.ticks,maxTicksLimit:10}},y:{...sy,ticks:{...sy.ticks,callback:v=>'R$ '+(v/1000).toFixed(0)+'k'}}}}});
+}
+</script>
+</body>
+</html>
